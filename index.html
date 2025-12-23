@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XML to PNG | © jeyaram</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* --- ANIMATED BACKGROUND --- */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(-45deg, #0f0c29, #302b63, #24243e, #141E30);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            min-height: 100vh;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden; /* Prevent scroll during zoom */
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* --- LOADING SCREEN --- */
+        #loader {
+            position: fixed;
+            inset: 0;
+            background: #0f0c29;
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            transition: opacity 0.8s ease-out, visibility 0.8s;
+        }
+        
+        .loader-circle {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-radius: 50%;
+            border-top-color: #3b82f6;
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* --- GLASSMORPHISM CARDS --- */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        /* --- CHECKERBOARD PATTERN FOR PREVIEW --- */
+        .checkerboard-bg {
+            background-color: #1e1e1e;
+            background-image: 
+                linear-gradient(45deg, #2a2a2a 25%, transparent 25%), 
+                linear-gradient(-45deg, #2a2a2a 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #2a2a2a 75%), 
+                linear-gradient(-45deg, transparent 75%, #2a2a2a 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        }
+
+        /* --- RANGE SLIDER STYLING --- */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #60a5fa;
+            cursor: pointer;
+            margin-top: -6px;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: rgba(255,255,255,0.2);
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body class="flex flex-col justify-between">
+
+    <!-- FULL PAGE LOADING SCREEN (INITIAL) -->
+    <div id="loader">
+        <div class="loader-circle"></div>
+        <h2 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400 animate-pulse">
+            Vector Magic
+        </h2>
+        <p class="text-white/30 text-xs mt-2 tracking-widest">INITIALIZING STUDIO</p>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-grow p-4 md:p-8 opacity-0 transition-opacity duration-1000" id="appContent">
+        <div class="max-w-7xl mx-auto">
+            
+            <!-- HEADER -->
+            <header class="text-center mb-8 md:mb-12">
+                <h1 class="text-3xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 mb-2 drop-shadow-lg">
+                    Vector Magic
+                </h1>
+                <p class="text-gray-400 text-sm md:text-base">Convert Android XML to High-Res PNG</p>
+            </header>
+
+            <!-- GRID LAYOUT -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-10">
+                
+                <!-- LEFT COLUMN: EDITOR -->
+                <div class="glass-card rounded-2xl p-4 md:p-6 flex flex-col h-full">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-2">
+                            <div class="p-2 bg-blue-500/20 rounded-lg">
+                                <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+                            </div>
+                            <h2 class="text-lg font-semibold text-white">XML Code</h2>
+                        </div>
+                        <span class="text-xs text-blue-300 bg-blue-500/10 px-2 py-1 rounded border border-blue-500/20">Paste Here</span>
+                    </div>
+
+                    <textarea id="xmlInput" spellcheck="false"
+                        class="w-full flex-grow h-64 md:h-96 bg-black/30 border border-white/10 rounded-xl p-4 font-mono text-xs md:text-sm text-blue-100 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all placeholder-gray-600 resize-none leading-relaxed"
+                        placeholder="Paste your <vector> code here..."
+                    ></textarea>
+
+                    <div id="errorBox" class="hidden mt-4 bg-red-500/10 border border-red-500/50 text-red-200 p-3 rounded-lg text-xs font-mono"></div>
+
+                    <button id="convertBtn"
+                        class="mt-4 w-full group relative overflow-hidden bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold py-3 md:py-4 rounded-xl shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]">
+                        <span class="relative z-10 flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5 animate-spin-slow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                            Generate Preview
+                        </span>
+                        <div class="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                    </button>
+                </div>
+
+                <!-- RIGHT COLUMN: PREVIEW -->
+                <div class="glass-card rounded-2xl p-4 md:p-6 flex flex-col h-full relative overflow-hidden">
+                    
+                    <!-- MINI LOADING OVERLAY (LOCAL) -->
+                    <div id="miniLoader" class="absolute inset-0 bg-black/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
+                        <div class="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                        <p class="text-blue-300 text-xs mt-3 font-mono tracking-widest uppercase">Rendering...</p>
+                    </div>
+
+                    <div class="flex items-center space-x-2 mb-4">
+                        <div class="p-2 bg-green-500/20 rounded-lg">
+                            <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        </div>
+                        <h2 class="text-lg font-semibold text-white">Live Preview</h2>
+                    </div>
+
+                    <!-- ZOOM CONTROLS -->
+                    <div class="flex items-center space-x-4 mb-3 px-2">
+                        <span class="text-xs text-gray-400">Zoom:</span>
+                        <input type="range" id="zoomSlider" min="0.5" max="3.0" step="0.1" value="1.0">
+                        <span id="zoomValue" class="text-xs font-mono text-blue-300 w-12 text-right">100%</span>
+                    </div>
+
+                    <!-- PREVIEW CANVAS WRAPPER -->
+                    <div class="flex-grow bg-black/40 rounded-xl border border-white/5 relative overflow-hidden checkerboard-bg min-h-[300px] md:min-h-[400px] flex items-center justify-center">
+                        
+                        <!-- Transform Wrapper for Zoom -->
+                        <div id="zoomWrapper" class="transition-transform duration-200 ease-out origin-center">
+                            <!-- SVG Container -->
+                            <div id="svgContainer" class="w-48 h-48 md:w-80 md:h-80 drop-shadow-2xl flex items-center justify-center">
+                                <span class="text-gray-500 text-sm">Preview will appear here</span>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <button id="downloadBtn" disabled
+                        class="mt-4 w-full bg-gray-700/50 text-gray-400 font-bold py-3 md:py-4 rounded-xl transition-all cursor-not-allowed border border-white/5 flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                        Download HD PNG
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="py-6 text-center text-white/40 text-sm glass-card border-t border-white/10 mt-8">
+        <p class="font-light tracking-wide">
+            Designed & Developed by 
+            <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-pink-400 font-bold">
+                &copy; jeyaram
+            </span>
+        </p>
+    </footer>
+
+    <!-- HIDDEN CANVAS FOR PROCESSING -->
+    <canvas id="hiddenCanvas" width="1024" height="1024" style="display:none;"></canvas>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // --- LOADER LOGIC ---
+        window.addEventListener('load', () => {
+            const loader = document.getElementById('loader');
+            const appContent = document.getElementById('appContent');
+            
+            // Wait 1.5 seconds then fade out
+            setTimeout(() => {
+                loader.style.opacity = '0';
+                loader.style.visibility = 'hidden';
+                appContent.style.opacity = '1';
+            }, 1500);
+        });
+
+        // --- MINI LOADER HELPERS ---
+        const miniLoader = document.getElementById('miniLoader');
+
+        function showMiniLoader() {
+            miniLoader.style.opacity = '1';
+            miniLoader.style.pointerEvents = 'auto'; // Block clicks while loading
+        }
+
+        function hideMiniLoader() {
+            miniLoader.style.opacity = '0';
+            miniLoader.style.pointerEvents = 'none';
+        }
+
+        // --- ZOOM LOGIC ---
+        const zoomSlider = document.getElementById('zoomSlider');
+        const zoomWrapper = document.getElementById('zoomWrapper');
+        const zoomValue = document.getElementById('zoomValue');
+
+        zoomSlider.addEventListener('input', (e) => {
+            const val = e.target.value;
+            zoomWrapper.style.transform = `scale(${val})`;
+            zoomValue.textContent = `${Math.round(val * 100)}%`;
+        });
+
+        // --- XML CONVERSION LOGIC ---
+        const defaultXml = `<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Left Vortex Wing -->
+    <path
+        android:pathData="M12,2 C9,2 5,4 3,8 C2,10 2,15 4,18 L9,13 C8,11 8,9 10,6 L12,2 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="3" android:startY="18"
+                android:endX="12" android:endY="2"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#00C6FF"/>
+                <item android:offset="1.0" android:color="#0072FF"/>
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Right Vortex Wing -->
+    <path
+        android:pathData="M12,2 L14,6 C16,9 16,11 15,13 L20,18 C22,15 22,10 21,8 C19,4 15,2 12,2 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="12" android:startY="2"
+                android:endX="20" android:endY="18"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#F093FB"/>
+                <item android:offset="1.0" android:color="#F5576C"/>
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Bottom Base -->
+    <path
+        android:pathData="M4,18 C6,21 9,22 12,22 C15,22 18,21 20,18 L15,13 C14,14 13,15 12,15 C11,15 10,14 9,13 L4,18 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="4" android:startY="18"
+                android:endX="20" android:endY="18"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#434343"/>
+                <item android:offset="0.5" android:color="#000000"/>
+                <item android:offset="1.0" android:color="#434343"/>
+            </gradient>
+        </aapt:attr>
+    </path>
+    
+    <!-- Accent Ring -->
+    <path
+        android:pathData="M12,15 C13.6,15 15,13.6 15,12 C15,10.4 13.6,9 12,9 C10.4,9 9,10.4 9,12 C9,13.6 10.4,15 12,15 Z"
+        android:fillColor="#00000000"/>
+
+    <!-- CENTER ARROW (Gold) -->
+    <path
+        android:pathData="M12,5 L17.5,14.5 L6.5,14.5 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="12" android:startY="5"
+                android:endX="12" android:endY="14.5"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#FFE259"/> 
+                <item android:offset="1.0" android:color="#FFA751"/>
+            </gradient>
+        </aapt:attr>
+    </path>
+    
+    <!-- Shine -->
+    <path
+        android:pathData="M12,5 L14,14.5 L12,14.5 Z"
+        android:fillColor="#44FFFFFF"/>
+
+</vector>`;
+
+        const xmlInput = document.getElementById('xmlInput');
+        const svgContainer = document.getElementById('svgContainer');
+        const convertBtn = document.getElementById('convertBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const errorBox = document.getElementById('errorBox');
+
+        // Set Default
+        xmlInput.value = defaultXml;
+
+        function normalizeColor(color) {
+            if (!color) return 'none';
+            if (color.startsWith('#') && color.length === 9) {
+                const alpha = parseInt(color.slice(1, 3), 16) / 255;
+                const r = parseInt(color.slice(3, 5), 16);
+                const g = parseInt(color.slice(5, 7), 16);
+                const b = parseInt(color.slice(7, 9), 16);
+                return `rgba(${r},${g},${b},${alpha.toFixed(2)})`;
+            }
+            return color;
+        }
+
+        function convertXmlToSvg() {
+            showMiniLoader(); // SHOW LOADER
+
+            // Use timeout to let loader render before heavy logic
+            setTimeout(() => {
+                const xmlString = xmlInput.value;
+                errorBox.classList.add('hidden');
+                errorBox.textContent = '';
+                
+                try {
+                    const parser = new DOMParser();
+                    const xmlDoc = parser.parseFromString(xmlString, "text/xml");
+                    
+                    if (xmlDoc.getElementsByTagName("parsererror").length > 0) {
+                        throw new Error("Invalid XML Syntax");
+                    }
+
+                    const vector = xmlDoc.getElementsByTagName("vector")[0];
+                    if (!vector) throw new Error("No <vector> tag found.");
+
+                    const viewportWidth = vector.getAttribute("android:viewportWidth") || "24";
+                    const viewportHeight = vector.getAttribute("android:viewportHeight") || "24";
+                    
+                    let svgDefs = "";
+                    let svgPaths = "";
+                    let gradCount = 0;
+
+                    const paths = xmlDoc.getElementsByTagName("path");
+                    
+                    for (let i = 0; i < paths.length; i++) {
+                        const path = paths[i];
+                        const d = path.getAttribute("android:pathData");
+                        const fillColor = path.getAttribute("android:fillColor");
+                        const strokeColor = path.getAttribute("android:strokeColor");
+                        const strokeWidth = path.getAttribute("android:strokeWidth") || "0";
+                        
+                        let fillAttr = 'fill="none"';
+                        let strokeAttr = '';
+
+                        if (strokeColor) {
+                            strokeAttr = `stroke="${normalizeColor(strokeColor)}" stroke-width="${strokeWidth}"`;
+                        }
+
+                        if (fillColor && fillColor.startsWith('#')) {
+                            fillAttr = `fill="${normalizeColor(fillColor)}"`;
+                        } 
+                        
+                        const aaptAttr = path.getElementsByTagName("aapt:attr")[0];
+                        if (aaptAttr && aaptAttr.getAttribute("name") === "android:fillColor") {
+                            const gradient = aaptAttr.getElementsByTagName("gradient")[0];
+                            if (gradient) {
+                                const gradId = `grad_${gradCount++}`;
+                                const startX = gradient.getAttribute("android:startX") || "0";
+                                const startY = gradient.getAttribute("android:startY") || "0";
+                                const endX = gradient.getAttribute("android:endX") || "0";
+                                const endY = gradient.getAttribute("android:endY") || "0";
+                                
+                                let stops = "";
+                                const items = gradient.getElementsByTagName("item");
+                                for (let j = 0; j < items.length; j++) {
+                                    const offset = items[j].getAttribute("android:offset");
+                                    const color = items[j].getAttribute("android:color");
+                                    stops += `<stop offset="${offset}" stop-color="${normalizeColor(color)}" />`;
+                                }
+
+                                svgDefs += `<linearGradient id="${gradId}" gradientUnits="userSpaceOnUse" x1="${startX}" y1="${startY}" x2="${endX}" y2="${endY}">${stops}</linearGradient>`;
+                                fillAttr = `fill="url(#${gradId})"`;
+                            }
+                        }
+
+                        if (d) {
+                            svgPaths += `<path d="${d}" ${fillAttr} ${strokeAttr} />`;
+                        }
+                    }
+
+                    const finalSvg = `
+                        <svg id="generatedSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${viewportWidth} ${viewportHeight}" width="100%" height="100%">
+                            <defs>${svgDefs}</defs>
+                            ${svgPaths}
+                        </svg>
+                    `;
+                    
+                    svgContainer.innerHTML = finalSvg;
+                    
+                    // Enable Download
+                    downloadBtn.disabled = false;
+                    downloadBtn.className = "mt-4 w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold py-3 md:py-4 rounded-xl shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2";
+
+                } catch (err) {
+                    console.error(err);
+                    errorBox.textContent = 'Error: ' + err.message;
+                    errorBox.classList.remove('hidden');
+                    svgContainer.innerHTML = '<span class="text-red-400 font-mono text-sm">Conversion Failed</span>';
+                    
+                    downloadBtn.disabled = true;
+                    downloadBtn.className = "mt-4 w-full bg-gray-700/50 text-gray-400 font-bold py-3 md:py-4 rounded-xl transition-all cursor-not-allowed border border-white/5 flex items-center justify-center gap-2";
+                } finally {
+                    // Small delay to make the loader visible even for fast ops
+                    setTimeout(hideMiniLoader, 500);
+                }
+            }, 100);
+        }
+
+        function downloadPng() {
+            const svgElement = document.getElementById('generatedSvg');
+            if (!svgElement) return;
+
+            showMiniLoader(); // SHOW LOADER
+
+            setTimeout(() => {
+                const canvas = document.getElementById('hiddenCanvas');
+                const ctx = canvas.getContext('2d');
+                
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                const serializer = new XMLSerializer();
+                const svgData = serializer.serializeToString(svgElement);
+                
+                const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
+                const url = URL.createObjectURL(svgBlob);
+
+                const img = new Image();
+                img.onload = function() {
+                    ctx.drawImage(img, 0, 0, 1024, 1024);
+                    const pngUrl = canvas.toDataURL("image/png");
+                    
+                    const downloadLink = document.createElement("a");
+                    downloadLink.href = pngUrl;
+                    downloadLink.download = "icon_jeyaram_design.png";
+                    document.body.appendChild(downloadLink);
+                    downloadLink.click();
+                    document.body.removeChild(downloadLink);
+                    
+                    URL.revokeObjectURL(url);
+                    hideMiniLoader(); // HIDE LOADER
+                };
+                img.src = url;
+            }, 100);
+        }
+
+        convertBtn.addEventListener('click', convertXmlToSvg);
+        downloadBtn.addEventListener('click', downloadPng);
+        // Delay initial conversion slightly to ensure DOM is ready behind loader
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(convertXmlToSvg, 100);
+        });
+
+    </script>
+</body>
+</html>
