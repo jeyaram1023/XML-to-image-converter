@@ -113,5 +113,6 @@ A **clean, blazing-fast, ad-free** Android Vector XML viewer & exporter.
 
 <!-- Snake Contribution Animation -->
 <p align="center">
-  <img src="https://github.com/jeyaram1023/jeyaram1023/blob/output/github-contribution-grid-snake.svg"/>
+  <img src="https://github.com/jeyaram1023/My-portfolio/blob/output/github-contribution-grid-snake.svg" alt="snake animation" width="100%"/>
+</div>
 </p>
